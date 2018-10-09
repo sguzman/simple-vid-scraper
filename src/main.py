@@ -198,16 +198,23 @@ def p(*args):
     print_queue.put(args)
 
 
-def insert_vids(conn, vids):
-    sql = 'INSERT INTO youtube.entities.videos VALUES (%s) ON CONFLICT DO NOTHING'
+def insert_vids(conn, chan_id, vids):
+    sql = 'INSERT INTO youtube.entities.videos VALUES (%s, %s) ON CONFLICT DO NOTHING'
+    cursor = conn.cursor()
+    for v in vids:
+        data = [chan_id, v]
+        cursor.execute(sql, data)
 
+    conn.commit()
+    cursor.close()
 
 
 def scrape_videos(i, chan):
-    chan_serial = chan[1]
+    chan_id, chan_serial = chan
     p('Core', i, 'processing channel', chan_serial)
 
     conn = connect()
+
     def close_conn(index):
         p('Closing core\'s', index, 'connection')
         conn.close()
@@ -220,7 +227,7 @@ def scrape_videos(i, chan):
 
     vids = get_video_items(json_data)
     count = len(vids)
-    insert_vids(conn, vids)
+    insert_vids(conn, chan_id, vids)
 
     cont = get_cont_token(json_data)
 
@@ -233,8 +240,10 @@ def scrape_videos(i, chan):
             break
 
         count += len(vids)
+        insert_vids(conn, chan_id, vids)
+
         cont = get_cont_token_cont(json_data)
-        p('Core', i, 'found', count, 'videos for channel', chan_serial)
+    p('Core', i, 'found', count, 'videos for channel', chan_serial)
 
 
 def main():
