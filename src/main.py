@@ -1,4 +1,4 @@
-import asyncio
+import atexit
 import bs4
 import datetime
 import json
@@ -198,29 +198,43 @@ def p(*args):
     print_queue.put(args)
 
 
+def insert_vids(conn, vids):
+    sql = 'INSERT INTO youtube.entities.videos VALUES (%s) ON CONFLICT DO NOTHING'
+
+
+
 def scrape_videos(i, chan):
     chan_serial = chan[1]
     p('Core', i, 'processing channel', chan_serial)
+
+    conn = connect()
+    def close_conn(index):
+        p('Closing core\'s', index, 'connection')
+        conn.close()
+
+    atexit.register(close_conn, i)
 
     soup = soup_channel(chan_serial)
     script = select_script_tag(soup)
     json_data = process_script(script)
 
     vids = get_video_items(json_data)
+    count = len(vids)
+    insert_vids(conn, vids)
+
     cont = get_cont_token(json_data)
 
-    while vids is not None:
+    while True:
         resp = soup_next_page(cont)
         json_data = json.loads(resp.text)
 
-        items = get_video_items_cont(json_data)
-        if items is None:
+        vids = get_video_items_cont(json_data)
+        if vids is None:
             break
 
-        vids.extend(items)
-
+        count += len(vids)
         cont = get_cont_token_cont(json_data)
-        p('Core', i, 'found', len(vids), 'videos for channel', chan_serial)
+        p('Core', i, 'found', count, 'videos for channel', chan_serial)
 
 
 def main():
