@@ -226,6 +226,9 @@ def scrape_videos(i, chan):
     json_data = process_script(script)
 
     vids = get_video_items(json_data)
+    if vids is None:
+        return
+
     count = len(vids)
     insert_vids(conn, chan_id, vids)
 
