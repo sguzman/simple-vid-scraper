@@ -1,10 +1,14 @@
 import bs4
+import datetime
 import json
-import requests
 import os
 import psycopg2
+import queue
+import requests
+import threading
 
 cores = 4
+print_queue = queue.Queue()
 
 
 def connect():
@@ -47,12 +51,23 @@ def videos():
     return records
 
 
+def p(*args):
+    print_queue.put(args)
+
+
+def print_daemon():
+    while True:
+        print(datetime.datetime.now(), *(print_queue.get(block=True)))
+
+
 def main():
+    threading.Thread(target=print_daemon, daemon=True).start()
+
     chans = channels()
     vids = videos()
 
-    print(len(chans))
-    print(len(vids))
+    print('Received', len(chans), 'channels')
+    print('Received', len(vids), 'videos')
 
 
 if __name__ == '__main__':
