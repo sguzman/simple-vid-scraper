@@ -226,8 +226,16 @@ def main():
     chans = channels()
     p('Received', len(chans), 'channels')
 
-    for c in chans:
-        scrape_videos(c)
+    def parallel_chan(i):
+        for j in range(i, len(chans), cores):
+            scrape_videos(chans[j])
+
+    for idx in range(cores):
+        def f():
+            parallel_chan(idx)
+
+        threading.Thread(target=f).start()
+
 
 
 if __name__ == '__main__':
