@@ -219,7 +219,6 @@ def scrape_videos(chan_serial):
     vids = get_video_items(json_data)
     cont = get_cont_token(json_data)
 
-    idx = 0
     while vids is not None:
         resp = soup_next_page(cont)
         json_data = json.loads(resp.text)
@@ -231,8 +230,7 @@ def scrape_videos(chan_serial):
         vids.extend(items)
 
         cont = get_cont_token_cont(json_data)
-        p(len(vids))
-        idx = idx + 1
+        p('Found', len(vids), 'videos for channel', chan_serial)
 
 
 def main():
