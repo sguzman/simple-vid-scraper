@@ -197,9 +197,9 @@ def p(*args):
     asyncio.run(print_async(*args))
 
 
-def scrape_videos(chan):
+def scrape_videos(i, chan):
     chan_serial = chan[1]
-    p('Processing channel', chan_serial)
+    p('Core', i, 'processing channel', chan_serial)
 
     soup = soup_channel(chan_serial)
     script = select_script_tag(soup)
@@ -219,7 +219,7 @@ def scrape_videos(chan):
         vids.extend(items)
 
         cont = get_cont_token_cont(json_data)
-        p('Found', len(vids), 'videos for channel', chan_serial)
+        p('Core', i, 'found', len(vids), 'videos for channel', chan_serial)
 
 
 def main():
@@ -228,7 +228,7 @@ def main():
 
     def parallel_chan(i):
         for j in range(i, len(chans), cores):
-            scrape_videos(chans[j])
+            scrape_videos(i, chans[j])
 
     for idx in range(cores):
         def f():
