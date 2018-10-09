@@ -189,12 +189,13 @@ def channels():
     return records
 
 
-async def print_async(*args):
-    print(datetime.datetime.now(), *args)
+def print_daemon():
+    while True:
+        print(datetime.datetime.now(), *print_queue.get(block=True))
 
 
 def p(*args):
-    asyncio.run(print_async(*args))
+    print_queue.put(args)
 
 
 def scrape_videos(i, chan):
@@ -223,6 +224,8 @@ def scrape_videos(i, chan):
 
 
 def main():
+    threading.Thread(target=print_daemon, daemon=True).start()
+
     chans = channels()
     p('Received', len(chans), 'channels')
 
