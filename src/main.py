@@ -212,6 +212,8 @@ def p(*args):
 
 
 def scrape_videos(chan_serial):
+    p('Processing channel', chan_serial)
+
     soup = soup_channel(chan_serial)
     script = select_script_tag(soup)
     json_data = process_script(script)
@@ -225,7 +227,7 @@ def scrape_videos(chan_serial):
 
         items = get_video_items_cont(json_data)
         if items is None:
-            return vids
+            break
 
         vids.extend(items)
 
@@ -241,7 +243,7 @@ def main():
     p('Received', len(vids), 'videos')
 
     for blank, c in chans:
-        p(scrape_videos(c))
+        scrape_videos(c)
 
 
 if __name__ == '__main__':
