@@ -203,9 +203,6 @@ def scrape_videos(chan):
 
     soup = soup_channel(chan_serial)
     script = select_script_tag(soup)
-    if script is None:
-        return
-
     json_data = process_script(script)
 
     vids = get_video_items(json_data)
