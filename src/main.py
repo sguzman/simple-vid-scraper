@@ -7,6 +7,7 @@ import queue
 import random
 import requests
 import threading
+import traceback
 
 cores = 4
 print_queue = queue.Queue()
@@ -251,6 +252,8 @@ def scrape_videos(conn, i, chan):
             cont = get_cont_token_cont(json_data)
         except json.decoder.JSONDecodeError as e:
             print(e)
+            traceback.print_exc()
+
     p('Core', i, 'found', count, 'videos for channel', chan_serial)
 
 
