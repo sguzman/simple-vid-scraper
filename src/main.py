@@ -226,7 +226,7 @@ def scrape_videos(conn, i, chan, restarted=False):
 
     soup = soup_channel(chan_serial)
     if soup is None and not restarted:
-        p('Bad response - retrying')
+        p('Core', i, 'bad response - retrying')
         return scrape_videos(conn, i, chan, True)
 
     script = select_script_tag(soup)
