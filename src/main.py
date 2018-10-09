@@ -1,3 +1,4 @@
+import asyncio
 import bs4
 import datetime
 import json
@@ -51,23 +52,20 @@ def videos():
     return records
 
 
+async def print_async(*args):
+    print(*args)
+
+
 def p(*args):
-    print_queue.put(args)
-
-
-def print_daemon():
-    while True:
-        print(datetime.datetime.now(), *(print_queue.get(block=True)))
+    asyncio.run(print_async(*args))
 
 
 def main():
-    threading.Thread(target=print_daemon, daemon=True).start()
-
     chans = channels()
     vids = videos()
 
-    print('Received', len(chans), 'channels')
-    print('Received', len(vids), 'videos')
+    p('Received', len(chans), 'channels')
+    p('Received', len(vids), 'videos')
 
 
 if __name__ == '__main__':
