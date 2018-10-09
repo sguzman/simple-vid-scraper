@@ -8,6 +8,7 @@ import random
 import requests
 import threading
 import traceback
+import ssl
 
 cores = 4
 print_queue = queue.Queue()
@@ -214,58 +215,44 @@ def insert_vids(conn, chan_id, vids):
     cursor.close()
 
 
-def scrape_videos(conn, i, chan, restarted=False):
-    chan_id, chan_serial = chan
-    p('Core', i, 'processing channel', chan_serial)
+def scrape_videos(conn, i, chan):
+    try:
+        chan_id, chan_serial = chan
+        p('Core', i, 'processing channel', chan_serial)
 
-    def close_conn(index):
-        p('Closing core\'s', index, 'connection')
-        conn.close()
+        soup = soup_channel(chan_serial)
 
-    atexit.register(close_conn, i)
+        script = select_script_tag(soup)
+        json_data = process_script(script)
 
-    soup = soup_channel(chan_serial)
-    if soup is None and not restarted:
-        p('Core', i, 'bad response - retrying')
-        return scrape_videos(conn, i, chan, True)
+        vids = get_video_items(json_data)
 
-    script = select_script_tag(soup)
-    if script is None:
-        return
-
-    json_data = process_script(script)
-
-    vids = get_video_items(json_data)
-    if vids is None:
-        return
-
-    count = len(vids)
-    insert_vids(conn, chan_id, vids)
-
-    cont = get_cont_token(json_data)
-
-    retry = True
-    while retry:
-        resp = soup_next_page(cont)
-        if resp is None and resp:
-            retry = False
-            continue
-
-        if resp is None and not resp:
-            break
-
-        json_data = json.loads(resp.text)
-
-        vids = get_video_items_cont(json_data)
-        if vids is None:
-            break
-
-        count += len(vids)
+        count = len(vids)
         insert_vids(conn, chan_id, vids)
 
-        cont = get_cont_token_cont(json_data)
+        cont = get_cont_token(json_data)
 
-    p('Core', i, 'found', count, 'videos for channel', chan_serial)
+        while True:
+            resp = soup_next_page(cont)
+            if resp is None:
+                break
+
+            json_data = json.loads(resp.text)
+
+            vids = get_video_items_cont(json_data)
+            if vids is None:
+                break
+
+            count += len(vids)
+            insert_vids(conn, chan_id, vids)
+
+            cont = get_cont_token_cont(json_data)
+
+        p('Core', i, 'found', count, 'videos for channel', chan_serial)
+    except ssl.SSLEOFError as ssl_e:
+        traceback.print_exc()
+        scrape_videos(conn, i, chan)
+
 
 
 def main():
@@ -278,6 +265,12 @@ def main():
 
     def parallel_chan(i):
         conn = connect()
+
+        def close_conn(index):
+            p('Closing core\'s', index, 'connection')
+            conn.close()
+
+        atexit.register(close_conn, i)
 
         for j in range(i, len(chans), cores):
             scrape_videos(conn, i, chans[j])
