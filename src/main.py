@@ -4,6 +4,7 @@ import datetime
 import json
 import psycopg2
 import queue
+import random
 import requests
 import threading
 
@@ -236,17 +237,20 @@ def scrape_videos(conn, i, chan):
     cont = get_cont_token(json_data)
 
     while True:
-        resp = soup_next_page(cont)
-        json_data = json.loads(resp.text)
+        try:
+            resp = soup_next_page(cont)
+            json_data = json.loads(resp.text)
 
-        vids = get_video_items_cont(json_data)
-        if vids is None:
-            break
+            vids = get_video_items_cont(json_data)
+            if vids is None:
+                break
 
-        count += len(vids)
-        insert_vids(conn, chan_id, vids)
+            count += len(vids)
+            insert_vids(conn, chan_id, vids)
 
-        cont = get_cont_token_cont(json_data)
+            cont = get_cont_token_cont(json_data)
+        except json.decoder.JSONDecodeError as e:
+            print(e)
     p('Core', i, 'found', count, 'videos for channel', chan_serial)
 
 
