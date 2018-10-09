@@ -53,7 +53,7 @@ def videos():
 
 
 async def print_async(*args):
-    print(*args)
+    print(datetime.datetime.now(), *args)
 
 
 def p(*args):
