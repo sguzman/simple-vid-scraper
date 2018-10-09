@@ -38,6 +38,9 @@ def souped(url, params, headers):
     headers['User-Agent'] = user_agent
 
     req = requests.get(url, params=params, headers=headers)
+    if req.status_code != 200:
+        return None
+
     soup = bs4.BeautifulSoup(req.text, 'html.parser')
 
     return soup
@@ -211,7 +214,7 @@ def insert_vids(conn, chan_id, vids):
     cursor.close()
 
 
-def scrape_videos(conn, i, chan):
+def scrape_videos(conn, i, chan, restarted=False):
     chan_id, chan_serial = chan
     p('Core', i, 'processing channel', chan_serial)
 
@@ -222,6 +225,10 @@ def scrape_videos(conn, i, chan):
     atexit.register(close_conn, i)
 
     soup = soup_channel(chan_serial)
+    if soup is None and not restarted:
+        p('Bad response - retrying')
+        return scrape_videos(conn, i, chan, True)
+
     script = select_script_tag(soup)
     if script is None:
         return
@@ -237,22 +244,26 @@ def scrape_videos(conn, i, chan):
 
     cont = get_cont_token(json_data)
 
-    while True:
-        try:
-            resp = soup_next_page(cont)
-            json_data = json.loads(resp.text)
+    retry = True
+    while retry:
+        resp = soup_next_page(cont)
+        if resp is None and resp:
+            retry = False
+            continue
 
-            vids = get_video_items_cont(json_data)
-            if vids is None:
-                break
+        if resp is None and not resp:
+            break
 
-            count += len(vids)
-            insert_vids(conn, chan_id, vids)
+        json_data = json.loads(resp.text)
 
-            cont = get_cont_token_cont(json_data)
-        except json.decoder.JSONDecodeError as e:
-            print(e)
-            traceback.print_exc()
+        vids = get_video_items_cont(json_data)
+        if vids is None:
+            break
+
+        count += len(vids)
+        insert_vids(conn, chan_id, vids)
+
+        cont = get_cont_token_cont(json_data)
 
     p('Core', i, 'found', count, 'videos for channel', chan_serial)
 
