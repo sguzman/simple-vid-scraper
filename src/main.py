@@ -197,7 +197,8 @@ def p(*args):
     asyncio.run(print_async(*args))
 
 
-def scrape_videos(chan_serial):
+def scrape_videos(chan):
+    chan_serial = chan[1]
     p('Processing channel', chan_serial)
 
     soup = soup_channel(chan_serial)
@@ -226,10 +227,9 @@ def scrape_videos(chan_serial):
 
 def main():
     chans = channels()
-
     p('Received', len(chans), 'channels')
 
-    for blank, c in chans:
+    for c in chans:
         scrape_videos(c)
 
 
