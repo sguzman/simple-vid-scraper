@@ -258,6 +258,8 @@ def main():
     threading.Thread(target=print_daemon, daemon=True).start()
 
     chans = channels()
+    random.shuffle(chans)
+
     p('Received', len(chans), 'channels')
 
     def parallel_chan(i):
