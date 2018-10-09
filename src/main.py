@@ -2,7 +2,6 @@ import asyncio
 import bs4
 import datetime
 import json
-import os
 import psycopg2
 import queue
 import requests
@@ -43,7 +42,7 @@ def souped(url, params, headers):
 
 
 def soup_channel(chan_serial):
-    url = f'https://www.youtube.com/channel/{chan_serial}/videos'
+    url = f'https://www.youtube.com/channel/{chan_serial}/videos?flow=grid&view=0'
     return souped(url, None, None)
 
 
