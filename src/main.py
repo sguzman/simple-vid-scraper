@@ -190,19 +190,6 @@ def channels():
     return records
 
 
-def videos():
-    conn = connect()
-    sql = 'SELECT Vid.video_serial FROM youtube.entities.videos as Vid'
-    cursor = conn.cursor()
-    cursor.execute(sql)
-    records = set(x for x in cursor.fetchall())
-
-    cursor.close()
-    conn.close()
-
-    return records
-
-
 async def print_async(*args):
     print(datetime.datetime.now(), *args)
 
@@ -237,10 +224,8 @@ def scrape_videos(chan_serial):
 
 def main():
     chans = channels()
-    vids = videos()
 
     p('Received', len(chans), 'channels')
-    p('Received', len(vids), 'videos')
 
     for blank, c in chans:
         scrape_videos(c)
