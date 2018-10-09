@@ -105,6 +105,9 @@ def get_video_items(obj):
                    ]
 
     json_data = index_nest(obj, items_index)
+    if json_data is None:
+        return None
+
     return video_ids(json_data)
 
 
@@ -217,7 +220,7 @@ def scrape_videos(chan_serial):
     cont = get_cont_token(json_data)
 
     idx = 0
-    while True:
+    while vids is not None:
         resp = soup_next_page(cont)
         json_data = json.loads(resp.text)
 
