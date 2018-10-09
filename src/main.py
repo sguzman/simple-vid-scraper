@@ -209,11 +209,9 @@ def insert_vids(conn, chan_id, vids):
     cursor.close()
 
 
-def scrape_videos(i, chan):
+def scrape_videos(conn, i, chan):
     chan_id, chan_serial = chan
     p('Core', i, 'processing channel', chan_serial)
-
-    conn = connect()
 
     def close_conn(index):
         p('Closing core\'s', index, 'connection')
@@ -259,8 +257,10 @@ def main():
     p('Received', len(chans), 'channels')
 
     def parallel_chan(i):
+        conn = connect()
+
         for j in range(i, len(chans), cores):
-            scrape_videos(i, chans[j])
+            scrape_videos(conn, i, chans[j])
 
     for idx in range(cores):
         def f():
