@@ -1,21 +1,10 @@
 import atexit
 import bs4
-import datetime
 import json
 import psycopg2
-import queue
 import random
 import requests
-import threading
-import traceback
 import ssl
-
-cores = 4
-print_queue = queue.Queue()
-
-
-def json_pretty(js):
-    print(json.dumps(js, indent=' ', separators={', ', ': '}))
 
 
 def process_script(script):
@@ -184,7 +173,7 @@ def connect():
 
 def channels():
     conn = connect()
-    sql = 'SELECT Chan.id, Chan.chan_serial FROM youtube.entities.chans as Chan ORDER BY subs DESC'
+    sql = 'SELECT Chan.id, Chan.chan_serial FROM youtube.simple.channels as Chan'
     cursor = conn.cursor()
     cursor.execute(sql)
     records = [x for x in cursor.fetchall()]
@@ -195,17 +184,8 @@ def channels():
     return records
 
 
-def print_daemon():
-    while True:
-        print(datetime.datetime.now(), *print_queue.get(block=True))
-
-
-def p(*args):
-    print_queue.put(args)
-
-
 def insert_vids(conn, chan_id, vids):
-    sql = 'INSERT INTO youtube.entities.videos VALUES (%s, %s) ON CONFLICT DO NOTHING'
+    sql = 'INSERT INTO youtube.simple.videos VALUES (%s, %s) ON CONFLICT DO NOTHING'
     cursor = conn.cursor()
     for v in vids:
         data = [chan_id, v]
@@ -215,10 +195,10 @@ def insert_vids(conn, chan_id, vids):
     cursor.close()
 
 
-def scrape_videos(conn, i, chan):
+def scrape_videos(conn, chan):
     try:
         chan_id, chan_serial = chan
-        p('Core', i, 'processing channel', chan_serial)
+        print('Processing channel', chan_serial)
 
         soup = soup_channel(chan_serial)
 
@@ -248,40 +228,30 @@ def scrape_videos(conn, i, chan):
 
             cont = get_cont_token_cont(json_data)
 
-        p('Core', i, 'found', count, 'videos for channel', chan_serial)
-    except ssl.SSLEOFError as ssl_e:
-        traceback.print_exc()
-        scrape_videos(conn, i, chan)
-
+        print('Found', count, 'videos for channel', chan_serial)
+    except ssl.SSLEOFError:
+        scrape_videos(conn, chan)
 
 
 def main():
-    threading.Thread(target=print_daemon, daemon=True).start()
-
+    conn = connect()
     chans = channels()
     random.shuffle(chans)
 
-    p('Received', len(chans), 'channels')
+    print('Received', len(chans), 'channels')
 
-    def parallel_chan(i):
-        conn = connect()
+    def close_conn():
+        conn.close()
 
-        def close_conn(index):
-            p('Closing core\'s', index, 'connection')
-            conn.close()
+    atexit.register(close_conn)
+    for c in chans:
+        scrape_videos(conn, c)
 
-        atexit.register(close_conn, i)
-
-        for j in range(i, len(chans), cores):
-            scrape_videos(conn, i, chans[j])
-
-    for idx in range(cores):
-        def f():
-            parallel_chan(idx)
-
-        threading.Thread(target=f).start()
 
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print('Detected Ctrl-C - Quitting...')
