@@ -234,18 +234,23 @@ def scrape_videos(conn, chan):
 
 
 def main():
-    conn = connect()
-    chans = channels()
-    random.shuffle(chans)
-
-    print('Received', len(chans), 'channels')
+    conn = None
 
     def close_conn():
         conn.close()
 
     atexit.register(close_conn)
-    for c in chans:
-        scrape_videos(conn, c)
+
+    while True:
+        conn = connect()
+        chans = channels()
+        random.shuffle(chans)
+
+        print('Received', len(chans), 'channels')
+
+        for c in chans:
+            scrape_videos(conn, c)
+        conn.close()
 
 
 
