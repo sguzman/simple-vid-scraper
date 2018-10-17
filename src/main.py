@@ -160,7 +160,7 @@ def video_ids(items):
 def connect():
     db_user = 'admin'
     db_pass = 'admin'
-    db_host = '192.168.1.63'
+    db_host = 'localhost'
     db_port = '5432'
     db_db = 'youtube'
 
@@ -173,7 +173,7 @@ def connect():
 
 def channels():
     conn = connect()
-    sql = 'SELECT Chan.id, Chan.chan_serial FROM youtube.simple.channels as Chan'
+    sql = 'SELECT id, channel_serial FROM channels'
     cursor = conn.cursor()
     cursor.execute(sql)
     records = [x for x in cursor.fetchall()]
@@ -185,7 +185,7 @@ def channels():
 
 
 def insert_vids(conn, chan_id, vids):
-    sql = 'INSERT INTO youtube.simple.videos VALUES (%s, %s) ON CONFLICT DO NOTHING'
+    sql = 'INSERT INTO videos VALUES (%s, %s) ON CONFLICT DO NOTHING'
     cursor = conn.cursor()
     for v in vids:
         data = [chan_id, v]
