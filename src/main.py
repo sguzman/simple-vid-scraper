@@ -173,7 +173,7 @@ def connect():
 
 def channels():
     conn = connect()
-    sql = 'SELECT id, channel_serial FROM channels'
+    sql = 'SELECT id, serial FROM youtube.entities.channels'
     cursor = conn.cursor()
     cursor.execute(sql)
     records = [x for x in cursor.fetchall()]
@@ -185,7 +185,7 @@ def channels():
 
 
 def insert_vids(conn, chan_id, vids):
-    sql = 'INSERT INTO videos (channel_id, video_serial) VALUES (%s, %s) ON CONFLICT DO NOTHING'
+    sql = 'INSERT INTO youtube.entities.videos (id, serial) VALUES (%s, %s) ON CONFLICT DO NOTHING'
     cursor = conn.cursor()
     for v in vids:
         data = [chan_id, v]
@@ -244,16 +244,15 @@ def main():
 
     atexit.register(close_conn)
 
-    while True:
-        conn = connect()
-        chans = channels()
-        random.shuffle(chans)
+    conn = connect()
+    chans = channels()
+    random.shuffle(chans)
 
-        print('Received', len(chans), 'channels')
+    print('Received', len(chans), 'channels')
 
-        for c in chans:
-            scrape_videos(conn, c)
-        conn.close()
+    for c in chans:
+        scrape_videos(conn, c)
+    conn.close()
 
 
 if __name__ == '__main__':
