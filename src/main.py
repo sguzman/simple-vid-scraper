@@ -185,7 +185,7 @@ def channels():
 
 
 def insert_vids(conn, chan_id, vids):
-    sql = 'INSERT INTO videos VALUES (%s, %s) ON CONFLICT DO NOTHING'
+    sql = 'INSERT INTO videos (channel_id, video_serial) VALUES (%s, %s) ON CONFLICT DO NOTHING'
     cursor = conn.cursor()
     for v in vids:
         data = [chan_id, v]
