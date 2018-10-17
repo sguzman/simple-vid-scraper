@@ -158,8 +158,8 @@ def video_ids(items):
 
 
 def connect():
-    db_user = 'admin'
-    db_pass = 'admin'
+    db_user = 'postgres'
+    db_pass = ''
     db_host = 'localhost'
     db_port = '5432'
     db_db = 'youtube'
