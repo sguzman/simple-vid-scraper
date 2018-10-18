@@ -160,7 +160,7 @@ def video_ids(items):
 def connect():
     db_user = 'postgres'
     db_pass = ''
-    db_host = 'postgres-pod'
+    db_host = 'postgres-pod.post.youtube.postgres.cluster.info'
     db_port = '5432'
     db_db = 'youtube'
 
