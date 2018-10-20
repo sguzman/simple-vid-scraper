@@ -1,8 +1,6 @@
-import atexit
 import bs4
 import json
 import psycopg2
-import random
 import requests
 import ssl
 
@@ -158,9 +156,9 @@ def video_ids(items):
 
 
 def connect():
-    db_user = 'root'
+    db_user = 'postgres'
     db_pass = ''
-    db_host = 'localhost'
+    db_host = 'postgres-service.youtube.svc.cluster.local'
     db_port = '5432'
     db_db = 'youtube'
 
