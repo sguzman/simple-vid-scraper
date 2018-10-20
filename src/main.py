@@ -173,10 +173,10 @@ def connect():
 
 def channels():
     conn = connect()
-    sql = 'SELECT id, serial FROM youtube.entities.channels'
+    sql = 'SELECT id, serial FROM youtube.entities.channels ORDER BY RANDOM() LIMIT 1'
     cursor = conn.cursor()
     cursor.execute(sql)
-    records = [x for x in cursor.fetchall()]
+    records = cursor.fetchone()
 
     cursor.close()
     conn.close()
@@ -237,22 +237,14 @@ def scrape_videos(conn, chan):
 
 
 def main():
-    conn = None
+    while True:
+        conn = connect()
+        c = channels()
 
-    def close_conn():
-        conn.close()
+        print('Received', c, 'channels')
 
-    atexit.register(close_conn)
-
-    conn = connect()
-    chans = channels()
-    random.shuffle(chans)
-
-    print('Received', len(chans), 'channels')
-
-    for c in chans:
         scrape_videos(conn, c)
-    conn.close()
+        conn.close()
 
 
 if __name__ == '__main__':
