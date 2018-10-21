@@ -3,6 +3,7 @@ import json
 import psycopg2
 import requests
 import ssl
+import time
 
 
 def process_script(script):
@@ -235,6 +236,9 @@ def scrape_videos(conn, chan):
 
 
 def main():
+    print('Waiting for server to come up')
+    time.sleep(30)
+
     while True:
         conn = connect()
         c = channels()
