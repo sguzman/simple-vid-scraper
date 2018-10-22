@@ -3,7 +3,6 @@ import json
 import psycopg2
 import requests
 import ssl
-import time
 
 
 def process_script(script):
@@ -157,9 +156,9 @@ def video_ids(items):
 
 
 def connect():
-    db_user = 'postgres'
+    db_user = 'root'
     db_pass = ''
-    db_host = 'postgres-service.youtube.svc.cluster.local'
+    db_host = 'localhost'
     db_port = '5432'
     db_db = 'youtube'
 
@@ -172,10 +171,10 @@ def connect():
 
 def channels():
     conn = connect()
-    sql = 'SELECT id, serial FROM youtube.entities.channels ORDER BY RANDOM() LIMIT 1'
+    sql = 'SELECT serial FROM youtube.entities.channels ORDER BY RANDOM() LIMIT 1'
     cursor = conn.cursor()
     cursor.execute(sql)
-    records = cursor.fetchone()
+    records = cursor.fetchone()[0]
 
     cursor.close()
     conn.close()
@@ -183,20 +182,18 @@ def channels():
     return records
 
 
-def insert_vids(conn, chan_id, vids):
-    sql = 'INSERT INTO youtube.entities.videos (id, serial) VALUES (%s, %s) ON CONFLICT DO NOTHING'
+def insert_vids(conn, vids):
+    sql = 'INSERT INTO youtube.entities.videos (serial) VALUES (%s) ON CONFLICT DO NOTHING'
     cursor = conn.cursor()
     for v in vids:
-        data = [chan_id, v]
-        cursor.execute(sql, data)
+        cursor.execute(sql, [v])
 
     conn.commit()
     cursor.close()
 
 
-def scrape_videos(conn, chan):
+def scrape_videos(conn, chan_serial):
     try:
-        chan_id, chan_serial = chan
         print('Processing channel', chan_serial)
 
         soup = soup_channel(chan_serial)
@@ -206,11 +203,10 @@ def scrape_videos(conn, chan):
             return
 
         json_data = process_script(script)
-
         vids = get_video_items(json_data)
 
         count = len(vids)
-        insert_vids(conn, chan_id, vids)
+        insert_vids(conn, vids)
 
         cont = get_cont_token(json_data)
 
@@ -226,19 +222,16 @@ def scrape_videos(conn, chan):
                 break
 
             count += len(vids)
-            insert_vids(conn, chan_id, vids)
+            insert_vids(conn, vids)
 
             cont = get_cont_token_cont(json_data)
 
         print('Found', count, 'videos for channel', chan_serial)
     except ssl.SSLEOFError:
-        scrape_videos(conn, chan)
+        scrape_videos(conn, chan_serial)
 
 
 def main():
-    print('Waiting for server to come up')
-    time.sleep(30)
-
     while True:
         conn = connect()
         c = channels()
